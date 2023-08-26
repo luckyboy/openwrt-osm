@@ -1,8 +1,8 @@
 # OpenWrt-OSM Official Slightly Modification(OSM)
 
-### Automated OpenWrt image customization based on OpenWrt official release
+## Automated OpenWrt image customization based on OpenWrt official release
 
-### This repo's CI is based on [P3TERX](https://github.com/P3TERX/Actions-OpenWrt), thanks for the authors.
+###   This repo's CI is based on [P3TERX](https://github.com/P3TERX/Actions-OpenWrt), thanks for the authors.
 
 ## Usage:
   1. Prepare GitHub account
@@ -16,3 +16,5 @@
      https://downloads.openwrt.org/releases/23.05.0-rc3/targets/x86/64/feeds.buildinfo  <---- The OpenWrt official release feeds url
   6. Modify .github/workflows/openwrt-osm-ci.yml in those build steps at your needs. Basically, We can add or remove applications int the step "Generate configuration file"
   7. Run the workflow to build your own release.
+## License
+  MIT
