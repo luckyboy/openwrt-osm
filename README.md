@@ -2,7 +2,7 @@
 
 ## Automated OpenWrt image customization based on OpenWrt official release
 
-###   This repo's CI is based on [P3TERX](https://github.com/P3TERX/Actions-OpenWrt), thanks for the authors.
+###   This repo's CI is based on[ [KFERMercer/OpenWrt-CI](https://github.com/KFERMercer/OpenWrt-CI), thanks for the authors.
 
 ## Usage:
   * Fork this repo
