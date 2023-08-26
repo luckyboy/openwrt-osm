@@ -1,8 +1,8 @@
 # OpenWrt-OSM Official Slightly Modification(OSM)
 
-## Automated OpenWrt image customization based on OpenWrt official release
+### Automated OpenWrt image customization based on OpenWrt official release
 
-## This repo's CI is based on [P3TERX](https://github.com/P3TERX/Actions-OpenWrt), thanks for the authors.
+### This repo's CI is based on [P3TERX](https://github.com/P3TERX/Actions-OpenWrt), thanks for the authors.
 
 ## Usage:
   1. Prepare GitHub account
