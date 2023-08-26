@@ -1,0 +1,148 @@
+#
+# This is free software, lisence use MIT.
+# 
+# Copyright (C) 2019 P3TERX <https://p3terx.com>
+# Copyright (C) 2020 KFERMercer <KFER.Mercer@gmail.com>
+# 
+# <https://github.com/KFERMercer/OpenWrt-CI>
+#
+
+name: BNX2X-OpenWrt-CI
+
+on:
+  workflow_dispatch:
+    branches: 
+      - master
+  # schedule:
+  #   - cron: 0 20 * * *
+  release:
+    types: [published]
+
+jobs:
+
+  build_openwrt:
+
+    name: Build OpenWrt firmware
+
+    runs-on: ubuntu-latest
+    
+    defaults:
+        run:
+          working-directory: ./openwrt
+
+    env:
+      RELEASE_VERSION_NUMBER: ""
+
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: master
+
+      - name: Space cleanup
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          docker rmi `docker images -q`
+          sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
+          sudo -E apt-get update
+          sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch unzip zlib1g-dev lib32gcc-s1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint clang bison g++ g++-multilib libncurses-dev python3-distutils rsync file wget
+          sudo -E apt-get -y autoremove --purge
+          sudo -E apt-get clean
+          
+      - name: Download source code
+        run: |
+          rm .gitkeep
+          read BRANCH COMMIT_ID CONFIG_URL FEEDS_URL < ../openwrt_releases
+          git clone https://github.com/openwrt/openwrt.git . --branch=$BRANCH
+          git checkout $COMMIT_ID
+          cd /tmp
+          wget -O /tmp/OpenClash.zip https://github.com/vernesong/OpenClash/archive/master.zip
+          unzip -n -q OpenClash.zip
+          wget -O /tmp/theme-argon.zip https://github.com/jerrykuku/luci-theme-argon/archive/master.zip
+          unzip -n -q theme-argon.zip
+          cd -
+          cp -r /tmp/OpenClash-master/luci-app-openclash package/luci-app-openclash
+          cp -r /tmp/luci-theme-argon-master package/luci-theme-argon
+          rm -rf /tmp/OpenClash* /tmp/*theme-argon*
+          
+      - name: Update feeds
+        run: |
+          read BRANCH COMMIT_ID CONFIG_URL FEEDS_URL < ../openwrt_releases
+          wget -O feeds.conf $FEEDS_URL
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Generate configuration file
+        run: |
+          read BRANCH COMMIT_ID CONFIG_URL FEEDS_URL < ../openwrt_releases
+          
+          wget -O .config $CONFIG_URL
+          
+          VERSION_NUMBER=$(echo $(grep "VERSION_REPO" .config) | tr -d '"')
+          echo "RELEASE_VERSION_NUMBER=${VERSION_NUMBER##*/}" >> "$GITHUB_ENV"
+          VERSION_NUMBER=\"${VERSION_NUMBER##*/}\"
+          
+          cat >>.config<<EOF
+          CONFIG_PACKAGE_dockerd=y
+          CONFIG_PACKAGE_luci-app-dockerman=y
+          CONFIG_PACKAGE_luci-app-openclash=y
+          CONFIG_PACKAGE_luci-app-smartdns=y
+          CONFIG_PACKAGE_luci-app-sqm=y
+          CONFIG_PACKAGE_luci-app-udpxy=y
+          CONFIG_PACKAGE_luci-app-wireguard=y
+          CONFIG_LUCI_LANG_zh_Hans=y
+          CONFIG_TARGET_ROOTFS_PARTSIZE=4096
+          EOF
+          
+          # Set dnsmasq-full as default
+          sed -i 's/dnsmasq \\/dnsmasq-full \\/g' include/target.mk
+          sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' .config
+          sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER="${VERSION_NUMBER##*/}"/g" .config
+          sed -i "s/CONFIG_VERSION_DIST=\"OpenWrt\"/CONFIG_VERSION_DIST=\"OpenWrt-OSM\"/g" .config
+          
+          make defconfig
+          
+      - name: Make download
+        run: |
+          make download -j8 || make download -j1 V=s
+          rm -rf $(find ./dl/ -size -1024c)
+          cp -rf ../patches/$(find target/linux/x86/patches-* -type d)/ $(find target/linux/x86/patches-* -type d)
+
+      - name: Compile firmware
+        run: |
+          make -j$(nproc) || make -j1 V=s
+          echo "======================="
+          echo "Space usage:"
+          echo "======================="
+          df -h
+          echo "======================="
+          du -h ./ --max-depth=1
+          du -h /mnt/openwrt/ --max-depth=1 || true
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p ./artifact/firmware
+          mkdir -p ./artifact/package
+          mkdir -p ./artifact/buildinfo
+          cp -rf $(find ./bin/targets/ -name "*.img.gz" -type f) ./artifact/firmware/
+          cp -rf $(find ./bin -type f -name "kmod-bnx2x*.ipk") ./artifact/package/
+          cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/buildinfo/
+
+      - name: Deliver release
+        uses: actions/upload-artifact@v2
+        with:
+          name: openwrt-osm-${{ env.RELEASE_VERSION_NUMBER }}
+          path: openwrt/artifact/
+
+      - name: Upload release asset
+        if: github.event == 'release'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.YOURTOKEN }}
+          file: ./artifact/firmware/*
+          tag: ${{ github.ref }}
+          file_glob: true
