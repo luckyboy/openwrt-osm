@@ -110,7 +110,7 @@ jobs:
         run: |
           make download -j8 || make download -j1 V=s
           rm -rf $(find ./dl/ -size -1024c)
-          cp -rf ../patches/$(find target/linux/x86/patches-* -type d)/ $(find target/linux/x86/patches-* -type d)
+          cp -rf ../patches/$(find target/linux/x86/patches-* -type d)/* $(find target/linux/x86/patches-* -type d)/
 
       - name: Compile firmware
         run: |
