@@ -56,13 +56,16 @@ jobs:
       - name: Download source code
         run: |
           rm .gitkeep
+          pwd
           git -c advice.detachedHead=false clone -b ${{ github.ref_name }} --depth 1 https://github.com/openwrt/openwrt.git
           cd /tmp
           wget -O /tmp/OpenClash.zip https://github.com/vernesong/OpenClash/archive/master.zip
           unzip -n -q OpenClash.zip
           wget -O /tmp/theme-argon.zip https://github.com/jerrykuku/luci-theme-argon/archive/master.zip
           unzip -n -q theme-argon.zip
+          pwd
           cd -
+          pwd
           cp -r /tmp/OpenClash-master/luci-app-openclash package/luci-app-openclash
           cp -r /tmp/luci-theme-argon-master package/luci-theme-argon
           rm -rf /tmp/OpenClash* /tmp/*theme-argon*
