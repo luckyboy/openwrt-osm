@@ -74,9 +74,8 @@ jobs:
 
       - name: Generate configuration file
         run: |
-          VERSION=${{ github.ref_name }}
-          VERSION=${VERSION:1}
-          wget -O .config https://downloads.openwrt.org/releases/$VERSION/targets/x86/64/config.buildinfo
+          BASE_URL=$(grep -E '^VERSION_REPO.*https:/.' include/version.mk | grep -Eo 'https://.*[^)]')
+          wget -O .config $BASE_URL/targets/x86/64/config.buildinfo
           VERSION_NUMBER=$(echo $(grep "VERSION_REPO" .config) | tr -d '"')
           echo "RELEASE_VERSION_NUMBER=${VERSION_NUMBER##*/}" >> "$GITHUB_ENV"
           
