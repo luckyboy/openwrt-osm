@@ -9,9 +9,9 @@
 name: OpenWrt-OSM-CI
 
 on:
-  workflow_dispatch:
+  push:
     branches: 
-      - master
+      - main
   # schedule:
   #   - cron: 0 20 * * *
   release:
@@ -56,9 +56,7 @@ jobs:
       - name: Download source code
         run: |
           rm .gitkeep
-          read BRANCH COMMIT_ID CONFIG_URL FEEDS_URL < ../openwrt_releases
-          git clone https://github.com/openwrt/openwrt.git . --branch=$BRANCH
-          git checkout $COMMIT_ID
+          git -c advice.detachedHead=false clone -b ${{ github.ref_name }} --depth 1 https://github.com/openwrt/openwrt.git
           cd /tmp
           wget -O /tmp/OpenClash.zip https://github.com/vernesong/OpenClash/archive/master.zip
           unzip -n -q OpenClash.zip
@@ -71,20 +69,16 @@ jobs:
           
       - name: Update feeds
         run: |
-          read BRANCH COMMIT_ID CONFIG_URL FEEDS_URL < ../openwrt_releases
-          wget -O feeds.conf $FEEDS_URL
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
       - name: Generate configuration file
         run: |
-          read BRANCH COMMIT_ID CONFIG_URL FEEDS_URL < ../openwrt_releases
-          
-          wget -O .config $CONFIG_URL
-          
+          VERSION=${{ github.ref_name }}
+          VERSION=${VERSION:1}
+          wget -O .config https://downloads.openwrt.org/releases/$VERSION/targets/x86/64/config.buildinfo
           VERSION_NUMBER=$(echo $(grep "VERSION_REPO" .config) | tr -d '"')
           echo "RELEASE_VERSION_NUMBER=${VERSION_NUMBER##*/}" >> "$GITHUB_ENV"
-          VERSION_NUMBER=\"${VERSION_NUMBER##*/}\"
           
           cat >>.config<<EOF
           CONFIG_PACKAGE_dockerd=y
@@ -102,7 +96,6 @@ jobs:
           # Set dnsmasq-full as default
           sed -i 's/dnsmasq \\/dnsmasq-full \\/g' include/target.mk
           sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' .config
-          sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER="${VERSION_NUMBER##*/}"/g" .config
           sed -i "s/CONFIG_VERSION_DIST=\"OpenWrt\"/CONFIG_VERSION_DIST=\"OpenWrt-OSM\"/g" .config
           
           make defconfig
