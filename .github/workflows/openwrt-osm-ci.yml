@@ -9,11 +9,9 @@
 name: OpenWrt-OSM-CI
 
 on:
-  push:
+  workflow_dispatch:
     branches: 
       - main
-  # schedule:
-  #   - cron: 0 20 * * *
   release:
     types: [published]
 
