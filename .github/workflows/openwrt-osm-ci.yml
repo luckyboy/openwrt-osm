@@ -121,18 +121,18 @@ jobs:
           cp -rf $(find ./bin/targets/ -name "*.img.gz" -type f) ./artifact/firmware/
           cp -rf $(find ./bin -type f -name "kmod-bnx2x*.ipk") ./artifact/package/
           cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/buildinfo/
+          tar -czvf openwrt-osm-${{ env.RELEASE_VERSION_NUMBER }}.tar.gz ./artifact
 
       - name: Deliver release
         uses: actions/upload-artifact@v3
         with:
           name: openwrt-osm-${{ env.RELEASE_VERSION_NUMBER }}
-          path: openwrt/artifact/
+          path: openwrt/openwrt-osm-${{ env.RELEASE_VERSION_NUMBER }}.tar.gz
 
       - name: Upload release asset
         if: github.event_name == 'release'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: openwrt/artifact/*
+          file: openwrt/openwrt-osm-${{ env.RELEASE_VERSION_NUMBER }}.tar.gz
           tag: ${{ github.ref }}
-          file_glob: true
