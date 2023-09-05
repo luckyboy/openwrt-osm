@@ -115,13 +115,10 @@ jobs:
 
       - name: Prepare artifact
         run: |
-          mkdir -p ./artifact/firmware
-          mkdir -p ./artifact/package
-          mkdir -p ./artifact/buildinfo
-          cp -rf $(find ./bin/targets/ -name "*.img.gz" -type f) ./artifact/firmware/
-          cp -rf $(find ./bin -type f -name "kmod-bnx2x*.ipk") ./artifact/package/
-          cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/buildinfo/
-          tar -czvf openwrt-osm-${{ env.RELEASE_VERSION_NUMBER }}.tar.gz ./artifact
+          mkdir -p ./artifact
+          cp -rf $(find ./bin/targets/ -name "*.img.gz" -type f) ./artifact/
+          cp -rf $(find ./bin -type f -name "kmod-bnx2x*.ipk") ./artifact/
+          cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/
 
       - name: Deliver release
         uses: actions/upload-artifact@v3
