@@ -85,6 +85,7 @@ jobs:
           CONFIG_PACKAGE_luci-app-sqm=y
           CONFIG_PACKAGE_luci-app-udpxy=y
           CONFIG_PACKAGE_luci-app-wireguard=y
+          CONFIG_PACKAGE_kmod-bnx2x=y
           CONFIG_TARGET_ROOTFS_PARTSIZE=4096
           EOF
           
