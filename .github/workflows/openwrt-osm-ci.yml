@@ -51,7 +51,7 @@ jobs:
         run: |
           rm -f .gitkeep
           
-          git -c advice.detachedHead=false clone -b $1 --depth 1 https://github.com/openwrt/openwrt.git .
+          git -c advice.detachedHead=false clone -b ${{ github.ref_name }} --depth 1 https://github.com/openwrt/openwrt.git .
           
           # S1 Repo url
           # $2 Repo subdirectory (optional)
@@ -131,7 +131,7 @@ jobs:
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v3
         with:
-          name: openwrt-osm-${{ env.RELEASE_VERSION_NUMBER }}
+          name: openwrt-osm-${{ github.ref_name }}-$(cat openwrt/version)
           path: openwrt/artifact/
 
       - name: Upload release asset
