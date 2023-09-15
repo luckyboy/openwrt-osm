@@ -19,16 +19,13 @@ jobs:
 
   build_openwrt:
 
-    name: Build OpenWrt Firmware
+    name: Build OpenWrt OSM Firmware
 
     runs-on: ubuntu-latest
     
     defaults:
         run:
           working-directory: ./openwrt
-
-    env:
-      RELEASE_VERSION_NUMBER: ""
 
     if: github.event.repository.owner.id == github.event.sender.id
 
