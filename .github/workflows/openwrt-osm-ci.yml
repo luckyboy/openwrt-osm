@@ -52,22 +52,22 @@ jobs:
           
       - name: Download source code
         run: |
-          rm .gitkeep
-          git -c advice.detachedHead=false clone -b ${{ github.ref_name }} --depth 1 https://github.com/openwrt/openwrt.git .
-          # S1 Repo url
-          # $2 Repo download location
+          rm -f .gitkeep
           
-          download_latest_tag(){
+          git -c advice.detachedHead=false clone -b $1 --depth 1 https://github.com/openwrt/openwrt.git .
+          
+          # S1 Repo url
+          # $2 Repo subdirectory (optional)
+          download_package_latest_tag_from_repo(){
           	latest_tag=$(git ls-remote --tags --refs --sort="v:refname" $1 | tail -n1 | sed 's/.*\///')
           	echo Download $1@$latest_tag
-          	git -c advice.detachedHead=false -C $2 clone -b $latest_tag --depth 1 $1
+          	git -c advice.detachedHead=false -C /tmp clone -b $latest_tag --depth 1 $1
+          	cp -r /tmp/$(basename $1 .git)/$2 package
+          	rm -rf /tmp/$(basename $1 .git)
           }
           
-          download_latest_tag https://github.com/vernesong/OpenClash.git /tmp
-          download_latest_tag https://github.com/jerrykuku/luci-theme-argon.git /tmp
-          cp -r /tmp/OpenClash/luci-app-openclash package/luci-app-openclash
-          cp -r /tmp/luci-theme-argon package/luci-theme-argon
-          rm -rf /tmp/OpenClash* /tmp/*theme-argon*
+          download_package_latest_tag_from_repo https://github.com/vernesong/OpenClash.git luci-app-openclash
+          download_package_latest_tag_from_repo https://github.com/jerrykuku/luci-theme-argon.git
           
       - name: Update feeds
         run: |
