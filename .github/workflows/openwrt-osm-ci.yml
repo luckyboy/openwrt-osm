@@ -54,14 +54,19 @@ jobs:
         run: |
           rm .gitkeep
           git -c advice.detachedHead=false clone -b ${{ github.ref_name }} --depth 1 https://github.com/openwrt/openwrt.git .
-          cd /tmp
-          wget -nv -O /tmp/OpenClash.zip https://github.com/vernesong/OpenClash/archive/master.zip
-          unzip -n -q OpenClash.zip
-          wget -nv -O /tmp/theme-argon.zip https://github.com/jerrykuku/luci-theme-argon/archive/master.zip
-          unzip -n -q theme-argon.zip
-          cd -
-          cp -r /tmp/OpenClash-master/luci-app-openclash package/luci-app-openclash
-          cp -r /tmp/luci-theme-argon-master package/luci-theme-argon
+          # S1 Repo url
+          # $2 Repo download location
+          
+          download_latest_tag(){
+          	latest_tag=$(git ls-remote --tags --refs --sort="v:refname" $1 | tail -n1 | sed 's/.*\///')
+          	echo Download $1@$latest_tag
+          	git -c advice.detachedHead=false -C $2 clone -b $latest_tag --depth 1 $1
+          }
+          
+          download_latest_tag https://github.com/vernesong/OpenClash.git /tmp
+          download_latest_tag https://github.com/jerrykuku/luci-theme-argon.git /tmp
+          cp -r /tmp/OpenClash/luci-app-openclash package/luci-app-openclash
+          cp -r /tmp/luci-theme-argon package/luci-theme-argon
           rm -rf /tmp/OpenClash* /tmp/*theme-argon*
           
       - name: Update feeds
@@ -71,12 +76,11 @@ jobs:
 
       - name: Generate configuration file
         run: |
-          BASE_URL=$(grep -E '^VERSION_REPO.*https:/.' include/version.mk | grep -Eo 'https://.*[^)]')
-          wget -nv -O .config $BASE_URL/targets/x86/64/config.buildinfo
-          VERSION_NUMBER=$(echo $(grep "VERSION_REPO" .config) | tr -d '"')
-          echo "RELEASE_VERSION_NUMBER=${VERSION_NUMBER##*/}" >> "$GITHUB_ENV"
+          VERSION_REPO=$(grep -E '^VERSION_REPO.*https:/.' include/version.mk | grep -Eo 'https://.*[^)]')
+          wget -nv -O .config $VERSION_REPO/targets/x86/64/config.buildinfo
           
           cat >>.config<<EOF
+          CONFIG_LUCI_LANG_zh_Hans=y
           CONFIG_PACKAGE_dockerd=y
           CONFIG_PACKAGE_luci-app-dockerman=y
           CONFIG_PACKAGE_luci-app-openclash=y
@@ -84,26 +88,31 @@ jobs:
           CONFIG_PACKAGE_luci-app-sqm=y
           CONFIG_PACKAGE_luci-app-udpxy=y
           CONFIG_PACKAGE_luci-app-wireguard=y
-          CONFIG_PACKAGE_kmod-bnx2x=y
-          CONFIG_LUCI_LANG_zh_Hans=y
           CONFIG_TARGET_ROOTFS_PARTSIZE=4096
           EOF
           
-          # Set dnsmasq-full as default
+          #Set dnsmasq-full as default
           sed -i 's/dnsmasq \\/dnsmasq-full \\/g' include/target.mk
           sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' .config
           sed -i "s/CONFIG_VERSION_DIST=\"OpenWrt\"/CONFIG_VERSION_DIST=\"OpenWrt-OSM\"/g" .config
-          sed -i '/CONFIG_SDK=y/d' .config
-          sed -i '/CONFIG_SDK_LLVM_BPF=y/d' .config
           
-          make defconfig
+          #Download Toolchain
+          wget -nv -O /tmp/release_page.html ${VERSION_REPO}/targets/x86/64/
+          TOOLCHAIN=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
+          wget -nv -O /tmp/${TOOLCHAIN} ${VERSION_REPO}/targets/x86/64/${TOOLCHAIN}
+          tar -C /tmp -xf /tmp/${TOOLCHAIN}
+          TOOLCHAIN_DIR_NAME=$(basename $(find /tmp/$(basename $TOOLCHAIN .tar.xz) -name "toolchain-*" -type d))
+          mv /tmp/$(basename $TOOLCHAIN .tar.xz)/${TOOLCHAIN_DIR_NAME} /tmp/
+          
+          #Setup external toolchain
+          ./scripts/ext-toolchain.sh --toolchain /tmp/${TOOLCHAIN_DIR_NAME} --overwrite-config --config x86-64/generic
           
       - name: Make download
         run: |
           make download -j8 || make download -j1 V=s
           rm -rf $(find ./dl/ -size -1024c)
-          cp -rf ../patches/$(find target/linux/x86/patches-* -type d)/* $(find target/linux/x86/patches-* -type d)/
-
+          find ../patches/ -type f | while read patch; do cp $patch ${patch#*../patches/}; done
+          
       - name: Compile firmware
         run: |
           make -j$(nproc) || make -j1 V=s
