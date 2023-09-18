@@ -31,18 +31,20 @@ sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER=\"${version_version_n
 sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"r$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
 
 #Download Toolchain
-if [ -z $(find /tmp -maxdepth 1 -name 'toolchain-x86_64_gcc*_musl' -type d) ]; then
+TOOLCHAIN_PATH=$(find /tmp -maxdepth 1 -name 'toolchain-x86_64_gcc*_musl' -type d)
+if [ -z $TOOLCHAIN_PATH ]; then
 	wget -nv -O /tmp/release_page.html ${VERSION_REPO}/targets/x86/64/
 	TOOLCHAIN=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
-	echo 'toolchain not found, downloading'
+	echo 'Downloading toolchain...'
 	wget -nv -O /tmp/${TOOLCHAIN} ${VERSION_REPO}/targets/x86/64/${TOOLCHAIN}
 	tar -C /tmp -xf /tmp/${TOOLCHAIN}
 	TOOLCHAIN_DIR_NAME=$(basename $(find /tmp/$(basename $TOOLCHAIN .tar.xz) -name "toolchain-*" -type d))
-	mv -f /tmp/$(basename $TOOLCHAIN .tar.xz)/${TOOLCHAIN_DIR_NAME} /tmp/
+	mv -f /tmp/$(basename $TOOLCHAIN .tar.xz)/${TOOLCHAIN_DIR_NAME} /tmp
+	TOOLCHAIN_PATH=/tmp/$TOOLCHAIN_DIR_NAME
 fi
 
 #Setup external toolchain
-./scripts/ext-toolchain.sh --toolchain /tmp/${TOOLCHAIN_DIR_NAME} --overwrite-config --config x86-64/generic
+./scripts/ext-toolchain.sh --toolchain $TOOLCHAIN_PATH --overwrite-config --config x86-64/generic
 
 #Make download
 make download -j8 || make download -j1 V=s
