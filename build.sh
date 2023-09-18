@@ -2,15 +2,22 @@
 
 #Prepare version
 source ../parse_yaml.sh
-eval $(parse_yaml ../version.osm)
+eval $(parse_yaml ../version.yaml)
 
 #Download source code
 rm -f .gitkeep
 git config --global advice.detachedHead false
 git clone -b $version_upstream_version_tag --depth 1 https://github.com/openwrt/openwrt.git .
 
-#Merge feeds
-for f in $version_feeds_ ; do eval echo \$${f} >> feeds.conf.default ; done
+# S1 Repo url
+download_package(){
+	latest_tag=$(git ls-remote --tags --refs --sort="v:refname" $1 | tail -n1 | sed 's/.*\///')
+	echo Downloading $1@$latest_tag
+	git -C package clone -b $latest_tag --depth 1 $1
+}
+
+#Download extra package
+for f in $version_package_ ; do eval download_package \$${f} ; done
 
 #Update feeds
 ./scripts/feeds update -a
