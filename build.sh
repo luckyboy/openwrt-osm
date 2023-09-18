@@ -9,15 +9,8 @@ rm -f .gitkeep
 git config --global advice.detachedHead false
 git clone -b $version_upstream_version_tag --depth 1 https://github.com/openwrt/openwrt.git .
 
-# S1 Repo url
-download_package(){
-	latest_tag=$(git ls-remote --tags --refs --sort="v:refname" $1 | tail -n1 | sed 's/.*\///')
-	echo Downloading $1@$latest_tag
-	git -C package clone -b $latest_tag --depth 1 $1
-}
-
-#Download extra package
-for f in $version_package_ ; do eval download_package \$${f} ; done
+#Merge feeds
+for f in $version_feeds_ ; do eval echo \$${f} >> feeds.conf.default ; done
 
 #Update feeds
 ./scripts/feeds update -a
@@ -38,12 +31,15 @@ sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER=\"${version_version_n
 sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"r$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
 
 #Download Toolchain
-wget -nv -O /tmp/release_page.html ${VERSION_REPO}/targets/x86/64/
-TOOLCHAIN=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
-wget -nv -O /tmp/${TOOLCHAIN} ${VERSION_REPO}/targets/x86/64/${TOOLCHAIN}
-tar -C /tmp -xf /tmp/${TOOLCHAIN}
-TOOLCHAIN_DIR_NAME=$(basename $(find /tmp/$(basename $TOOLCHAIN .tar.xz) -name "toolchain-*" -type d))
-mv -f /tmp/$(basename $TOOLCHAIN .tar.xz)/${TOOLCHAIN_DIR_NAME} /tmp/
+if [ -z $(find /tmp -maxdepth 1 -name 'toolchain-x86_64_gcc*_musl' -type d) ]; then
+	wget -nv -O /tmp/release_page.html ${VERSION_REPO}/targets/x86/64/
+	TOOLCHAIN=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
+	echo 'toolchain not found, downloading'
+	wget -nv -O /tmp/${TOOLCHAIN} ${VERSION_REPO}/targets/x86/64/${TOOLCHAIN}
+	tar -C /tmp -xf /tmp/${TOOLCHAIN}
+	TOOLCHAIN_DIR_NAME=$(basename $(find /tmp/$(basename $TOOLCHAIN .tar.xz) -name "toolchain-*" -type d))
+	mv -f /tmp/$(basename $TOOLCHAIN .tar.xz)/${TOOLCHAIN_DIR_NAME} /tmp/
+fi
 
 #Setup external toolchain
 ./scripts/ext-toolchain.sh --toolchain /tmp/${TOOLCHAIN_DIR_NAME} --overwrite-config --config x86-64/generic
