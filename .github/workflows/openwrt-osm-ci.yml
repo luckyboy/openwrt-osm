@@ -61,7 +61,7 @@ jobs:
           #Prepare version
           source ../parse_yaml.sh
           eval $(parse_yaml ../version.yaml)
-          which qemu-img
+          
           #Download source code
           rm -f .gitkeep
           git config --global advice.detachedHead false
@@ -147,11 +147,28 @@ jobs:
           echo "======================="
           du -h ./ --max-depth=1
 
+      - name: Convert image to vmdk
+        run: |
+          #Convert img to vmdk
+          for file in $(find ./bin -name "openwrt-osm-*-efi.img.gz" -type f);
+          do
+          	echo "Convert image $(basename $file) to vmdk"
+          	cd $(dirname $file) > /dev/null
+          	gunzip -c $(basename $file) > $(basename $file .gz)
+          	qemu-img convert -f raw $(basename $file .gz) -O vmdk $(basename $file .img.gz).vmdk
+          	gzip $(basename $file .img.gz).vmdk
+          	rm $(basename $file .gz)
+          	cd - > /dev/null
+          done
+          
       - name: Prepare artifact
         run: |
           mkdir -p ./artifact
           cp -rf $(find ./bin/targets/ -name "*.img.gz" -type f) ./artifact/
-          cp -rf $(find ./bin -type f -name "kmod-bnx2x*.ipk") ./artifact/
+          kmod-bnx2x=$(find ./bin -type f -name "kmod-bnx2x*.ipk")
+          if [ ! -z $kmod-bnx2x ]; then
+            cp -rf $kmod-bnx2x ./artifact/$(echo $kmod-bnx2x | sed 's/kmod-bnx2x_2.5G/g')
+          fi
           cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/
 
       - name: Deliver release
