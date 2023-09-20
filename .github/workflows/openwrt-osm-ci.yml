@@ -109,16 +109,16 @@ jobs:
           
           #Download Toolchain
           cd /tmp > /dev/null
-        	wget -nv -O release_page.html ${version_repo}/targets/x86/64/
-        	toolchain_file=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
-        	echo 'Downloading toolchain...'
-        	wget -nv -O ${toolchain_file} ${version_repo}/targets/x86/64/${toolchain_file}
-        	tar -xf ${toolchain_file}
-        	toolchain_dir=$(basename $(find $(basename $toolchain_file .tar.xz) -name "toolchain-*" -type d))
-        	mv -f $(basename $toolchain_file .tar.xz)/${toolchain_dir} .
-        	toolchain_path=/tmp/$toolchain_dir
-        	rm -rf $(basename $toolchain_file .tar.xz)*
-        	cd - > /dev/null
+          wget -nv -O release_page.html ${version_repo}/targets/x86/64/
+          toolchain_file=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
+          echo 'Downloading toolchain...'
+          wget -nv -O ${toolchain_file} ${version_repo}/targets/x86/64/${toolchain_file}
+          tar -xf ${toolchain_file}
+          toolchain_dir=$(basename $(find $(basename $toolchain_file .tar.xz) -name "toolchain-*" -type d))
+          mv -f $(basename $toolchain_file .tar.xz)/${toolchain_dir} .
+          toolchain_path=/tmp/$toolchain_dir
+          rm -rf $(basename $toolchain_file .tar.xz)*
+          cd - > /dev/null
           
           #Setup external toolchain
           ./scripts/ext-toolchain.sh --toolchain $toolchain_path --overwrite-config --config x86-64/generic
