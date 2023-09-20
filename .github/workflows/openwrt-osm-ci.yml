@@ -165,9 +165,9 @@ jobs:
         run: |
           mkdir -p ./artifact
           cp -rf $(find ./bin/targets/ -name "*.img.gz" -type f) ./artifact/
-          kmod-bnx2x=$(find ./bin -type f -name "kmod-bnx2x*.ipk")
-          if [ ! -z $kmod-bnx2x ]; then
-            cp -rf $kmod-bnx2x ./artifact/$(echo $kmod-bnx2x | sed 's/kmod-bnx2x_2.5G/g')
+          kmod_bnx2x=$(find ./bin -type f -name "kmod-bnx2x*.ipk")
+          if [ ! -z $kmod_bnx2x ]; then
+            cp -rf $kmod_bnx2x ./artifact/$(basename $(echo $kmod_bnx2x | sed 's/kmod-bnx2x/kmod-bnx2x_2.5G/g'))
           fi
           cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/
 
