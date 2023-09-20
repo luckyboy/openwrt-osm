@@ -26,6 +26,9 @@ jobs:
     defaults:
         run:
           working-directory: ./openwrt
+          
+    env:
+      VERSION_NUMBER: ""
 
     if: github.event.repository.owner.id == github.event.sender.id
 
@@ -58,7 +61,7 @@ jobs:
           #Prepare version
           source ../parse_yaml.sh
           eval $(parse_yaml ../version.yaml)
-          
+          which qemu-img
           #Download source code
           rm -f .gitkeep
           git config --global advice.detachedHead false
@@ -91,6 +94,11 @@ jobs:
 
       - name: Generate configuration file
         run: |
+          #Prepare version info
+          source ../parse_yaml.sh
+          eval $(parse_yaml ../version.yaml)
+          echo "VERSION_NUMBER=${version_version_number}" >> "$GITHUB_ENV"
+
           #Download upstream release config
           version_repo=$(grep -E '^VERSION_REPO.*https:/.' include/version.mk | grep -Eo 'https://.*[^)]')
           wget -nv -O .config $version_repo/targets/x86/64/config.buildinfo
@@ -150,7 +158,7 @@ jobs:
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v3
         with:
-          name: openwrt-osm-${{ github.ref_name }}-$(cat openwrt/version)
+          name: openwrt-osm-${{ env.VERSION_NUMBER }}
           path: openwrt/artifact/
 
       - name: Upload release asset
