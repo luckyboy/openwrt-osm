@@ -34,8 +34,8 @@ for f in $version_package_ ; do eval download_package \$${f} ; done
 ./scripts/feeds install -a
 
 #Generate configuration file
-VERSION_REPO=$(grep -E '^VERSION_REPO.*https:/.' include/version.mk | grep -Eo 'https://.*[^)]')
-wget -nv -O .config $VERSION_REPO/targets/x86/64/config.buildinfo
+version_repo=$(grep -E '^VERSION_REPO.*https:/.' include/version.mk | grep -Eo 'https://.*[^)]')
+wget -nv -O .config $version_repo/targets/x86/64/config.buildinfo
 
 #Merge config
 for f in $version_config_ ; do eval echo \$${f} >> .config ; done
@@ -50,20 +50,23 @@ sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER=\"${version_version_n
 sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
 
 #Download Toolchain
-TOOLCHAIN_PATH=$(find /tmp -maxdepth 1 -name 'toolchain-x86_64_gcc*_musl' -type d)
-if [ -z $TOOLCHAIN_PATH ]; then
-	wget -nv -O /tmp/release_page.html ${VERSION_REPO}/targets/x86/64/
-	TOOLCHAIN=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
+toolchain_path=$(find /tmp -maxdepth 1 -name 'toolchain-x86_64_gcc*_musl' -type d)
+if [ -z $toolchain_path ]; then
+	cd /tmp > /dev/null
+	wget -nv -O release_page.html ${version_repo}/targets/x86/64/
+	toolchain_file=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
 	echo 'Downloading toolchain...'
-	wget -nv -O /tmp/${TOOLCHAIN} ${VERSION_REPO}/targets/x86/64/${TOOLCHAIN}
-	tar -C /tmp -xf /tmp/${TOOLCHAIN}
-	TOOLCHAIN_DIR_NAME=$(basename $(find /tmp/$(basename $TOOLCHAIN .tar.xz) -name "toolchain-*" -type d))
-	mv -f /tmp/$(basename $TOOLCHAIN .tar.xz)/${TOOLCHAIN_DIR_NAME} /tmp
-	TOOLCHAIN_PATH=/tmp/$TOOLCHAIN_DIR_NAME
+	wget -nv -O ${toolchain_file} ${version_repo}/targets/x86/64/${toolchain_file}
+	tar -xf ${toolchain_file}
+	toolchain_dir=$(basename $(find $(basename $toolchain_file .tar.xz) -name "toolchain-*" -type d))
+	mv -f $(basename $toolchain_file .tar.xz)/${toolchain_dir} .
+	toolchain_path=/tmp/$toolchain_dir
+	rm -rf $(basename $toolchain_file .tar.xz)*
+	cd - > /dev/null
 fi
 
 #Setup external toolchain
-./scripts/ext-toolchain.sh --toolchain $TOOLCHAIN_PATH --overwrite-config --config x86-64/generic
+./scripts/ext-toolchain.sh --toolchain $toolchain_path --overwrite-config --config x86-64/generic
 
 #Make download
 make download -j8 || make download -j1 V=s
@@ -72,4 +75,16 @@ make download -j8 || make download -j1 V=s
 find ../patches/ -type f | while read patch; do cp $patch ${patch#*../patches/}; done
 
 #Compile firmware
-make -j$(nproc) || make -j1 V=s
+make -j8 || make -j1 V=s
+
+#Convert img to vmdk
+for file in $(find bin -name "openwrt-osm-*-efi.img.gz" -type f);
+do
+	echo "Convert image $(basename $file) to vmdk"
+	cd $(dirname $file) > /dev/null
+	gunzip -c $(basename $file) > $(basename $file .gz)
+	qemu-img convert -f raw $(basename $file .gz) -O vmdk $(basename $file .img.gz).vmdk
+	gzip $(basename $file .img.gz).vmdk
+	rm $(basename $file .gz)
+	cd - > /dev/null
+done
