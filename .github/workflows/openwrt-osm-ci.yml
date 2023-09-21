@@ -147,16 +147,17 @@ jobs:
           echo "======================="
           du -h ./ --max-depth=1
 
-      - name: Convert image to vmdk
+      - name: Generate vmdk files
         run: |
           #Convert img to vmdk
+          set -x
           for file in $(find ./bin -name "openwrt-osm-*-efi.img.gz" -type f);
           do
           	echo "Convert image $(basename $file) to vmdk"
           	cd $(dirname $file) > /dev/null
-          	gunzip -c $(basename $file) > $(basename $file .gz)
+          	gunzip -f -q -c $(basename $file) > $(basename $file .gz)
           	qemu-img convert -f raw $(basename $file .gz) -O vmdk $(basename $file .img.gz).vmdk
-          	gzip $(basename $file .img.gz).vmdk
+          	gzip -f -q $(basename $file .img.gz).vmdk
           	rm $(basename $file .gz)
           	cd - > /dev/null
           done
