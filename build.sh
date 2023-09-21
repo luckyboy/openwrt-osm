@@ -9,14 +9,14 @@ function download_package(){
     commit=$(echo $1 | grep -Eo '\^.*' | tr -d '^')
     branch=$(echo $1 | grep -Eo ';.*' | tr -d ';')
     if [ ! -z $commit ]; then
-	    echo Downloading package from $1
-	    git -C package clone $repo && cd package/$(basename $repo .git) && git checkout $commit && cd -
+        echo Downloading package from $1
+        git -C package clone $repo && cd package/$(basename $repo .git) && git checkout $commit && cd -
     elif [ ! -z $branch ]; then
-	    echo Downloading package from $1
-	    git -C package clone $repo --depth 1 --branch $branch
+        echo Downloading package from $1
+        git -C package clone $repo --depth 1 --branch $branch
     else
-	    echo "Invalid package info $1"
-	    exit 1
+        echo "Invalid package info $1"
+        exit 1
     fi
 }
 
@@ -93,13 +93,13 @@ function compile(){
 function generate_vmdk(){
     for file in $(find ./bin/target/ -name "openwrt-osm-*-efi.img.gz" -type f);
     do
-	    echo "Convert image $(basename $file) to vmdk"
-	    cd $(dirname $file) > /dev/null
-	    gunzip -f -q -c $(basename $file) > $(basename $file .gz)
-	    qemu-img convert -f raw $(basename $file .gz) -O vmdk $(basename $file .img.gz).vmdk
-	    gzip -f -q $(basename $file .img.gz).vmdk
-	    rm $(basename $file .gz)
-	    cd - > /dev/null
+        echo "Convert image $(basename $file) to vmdk"
+        cd $(dirname $file) > /dev/null
+        gunzip -f -q -c $(basename $file) > $(basename $file .gz)
+        qemu-img convert -f raw $(basename $file .gz) -O vmdk $(basename $file .img.gz).vmdk
+        gzip -f -q $(basename $file .img.gz).vmdk
+        rm $(basename $file .gz)
+        cd - > /dev/null
     done
 }
 
