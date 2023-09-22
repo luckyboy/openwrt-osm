@@ -21,7 +21,7 @@ jobs:
 
     name: Build OpenWrt OSM Firmware
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     defaults:
         run:
