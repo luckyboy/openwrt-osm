@@ -91,7 +91,7 @@ function compile(){
 
 #Convert img to vmdk
 function generate_vmdk(){
-    for file in $(find ./bin/target/ -name "openwrt-osm-*-efi.img.gz" -type f);
+    for file in $(find ./bin/targets/ -name "openwrt-osm-*-efi.img.gz" -type f);
     do
         echo "Convert image $(basename $file) to vmdk"
         cd $(dirname $file) > /dev/null
