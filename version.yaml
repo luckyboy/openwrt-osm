@@ -1,13 +1,13 @@
 version:
-  version_number:23.09.0
+  version_number:23.10.0
   ##OpenWrt official release version tag from https://github.com/openwrt/openwrt.git
-  upstream_version_tag:v23.05.0-rc3
-  ## Will be merged with feeds.conf.default
+  upstream_version_tag:v23.05.0-rc4
+  ## Will be downloaded in package dir
   package:
     - https://github.com/jerrykuku/luci-theme-argon.git;v1.8.3
     - https://github.com/sirpdboy/luci-app-ddns-go.git;v1.3.2-10
     - https://github.com/vernesong/OpenClash.git;v0.45.141-beta
-  ## Will be merged with buildinfo.config from official release
+  ## Will be merged with buildinfo.config from upstream release
   config:
     - CONFIG_LUCI_LANG_zh_Hans=y
     - CONFIG_PACKAGE_luci-compat=y
