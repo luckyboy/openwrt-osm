@@ -1,7 +1,7 @@
 version:
-  version_number:23.10.0
+  version_number:23.10.1
   ##OpenWrt official release version tag from https://github.com/openwrt/openwrt.git
-  upstream_version_tag:v23.05.0-rc4
+  upstream_version_tag:v23.05.0
   ## Will be downloaded in package dir
   package:
     - https://github.com/jerrykuku/luci-theme-argon.git;v1.8.3
