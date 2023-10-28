@@ -50,7 +50,7 @@ function merge_config(){
     #config version info
     sed -i "s/CONFIG_VERSION_DIST=\"OpenWrt\"/CONFIG_VERSION_DIST=\"OpenWrt-OSM\"/g" .config
     sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER=\"${version_version_number}\"/g" .config
-    sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
+    sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"r$(git -C ../ log --pretty=format:%h | wc -l)-$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
 }
 
 #Setup external toolchain
@@ -80,8 +80,13 @@ function make_download(){
 }
 
 #Apply patches
-function apply_patchs(){  
-    find ../patches/ -type f | while read patch; do cp $patch ${patch#*../patches/}; done
+function apply_patches(){
+    find ../patches/ -type f | while read patch
+    do
+        if [ -d $(dirname ${patch#*../patches/}) ] ; then
+            cp $patch ${patch#*../patches/}
+        fi
+    done
 }
 
 #Compile firmware
@@ -122,7 +127,7 @@ case $1 in
         merge_config
         setup_external_toolchain
         make_download
-        apply_patchs
+        apply_patches
         compile
         generate_vmdk
         ;;
