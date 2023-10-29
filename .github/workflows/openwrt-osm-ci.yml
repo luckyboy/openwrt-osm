@@ -110,10 +110,18 @@ jobs:
           sed -i 's/dnsmasq \\/dnsmasq-full \\/g' include/target.mk
           #Config luci-theme-argon as default theme
           sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' .config
+
+          #Get revivion number
+          git clone --bare ${{ github.repositoryUrl }} /tmp/openwrt-osm-bare
+          cd /tmp/openwrt-osm-bare
+          REV=$(git rev-list --count $(git log --reverse --pretty=format:%h | head -1)..${{ github.ref_name }})
+          cd -
+          rm -rf /tmp/openwrt-osm-bare
+          
           #Config version info
           sed -i "s/CONFIG_VERSION_DIST=\"OpenWrt\"/CONFIG_VERSION_DIST=\"OpenWrt-OSM\"/g" .config
           sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER=\"${version_version_number}\"/g" .config
-          sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"r$(git -C ../ log --pretty=format:%h | wc -l)-$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
+          sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"r$REV-$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
 
           #Download Toolchain
           cd /tmp > /dev/null
