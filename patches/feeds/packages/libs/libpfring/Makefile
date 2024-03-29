@@ -61,6 +61,8 @@ CONFIGURE_VARS += \
 	MACHINE="$(ARCH)" \
 	ac_cv_lib_nl_3_nl_socket_alloc=no
 
+EXTRA_CFLAGS += -Wno-implicit-fallthrough
+
 define Build/Compile
 	$(MAKE) -C "$(LINUX_DIR)" \
 		KERNEL_DIR="$(LINUX_DIR)" \
