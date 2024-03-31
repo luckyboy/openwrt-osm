@@ -1,5 +1,5 @@
 version:
-  version_number:24.03.29
+  version_number:24.03.31
   ##OpenWrt official release version tag from https://github.com/openwrt/openwrt.git
   upstream_version_tag:v23.05.3
   ## Will be downloaded in package dir
