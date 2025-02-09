@@ -206,7 +206,7 @@ jobs:
 
       - name: Deliver release
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: openwrt-osm-${{ env.VERSION_NUMBER }}
           path: openwrt/artifact/
