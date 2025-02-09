@@ -60,14 +60,14 @@ function setup_external_toolchain(){
         version_repo=$(grep -E '^VERSION_REPO.*https:/.' include/version.mk | grep -Eo 'https://.*[^)]')
         cd /tmp/ > /dev/null
         wget -nv -O release_page.html ${version_repo}/targets/x86/64/
-        toolchain_file=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).tar.xz"' /tmp/release_page.html | tr -d '"')
-        echo 'Downloading toolchain...'
+        toolchain_file=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).(xz|zst)"' /tmp/release_page.html | tr -d '"')
+        echo "Downloading toolchain...${toolchain_file}"
         wget -nv -O ${toolchain_file} ${version_repo}/targets/x86/64/${toolchain_file}
         tar -xf ${toolchain_file}
-        toolchain_dir=$(basename $(find $(basename $toolchain_file .tar.xz) -name "toolchain-*" -type d))
-        mv -f $(basename $toolchain_file .tar.xz)/${toolchain_dir} .
+        toolchain_dir=$(basename $(find ${toolchain_file%.*.*} -name "toolchain-*" -type d))
+        mv -f ${toolchain_file%.*.*}/${toolchain_dir} .
         toolchain_path=/tmp/$toolchain_dir
-        rm -rf $(basename $toolchain_file .tar.xz)*
+        rm -rf ${toolchain_file%.*.*}*
         cd - > /dev/null
     fi
     #Setup external toolchain
