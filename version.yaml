@@ -6,7 +6,7 @@ version:
   package:
     - https://github.com/jerrykuku/luci-theme-argon.git;v1.8.3
     - https://github.com/sirpdboy/luci-app-ddns-go.git;v6.7.0
-    - https://github.com/vernesong/OpenClash.git;v0.46.033-beta
+    - https://github.com/vernesong/OpenClash.git;v0.46.075
   ## Will be merged with buildinfo.config from upstream release
   config:
     - CONFIG_LUCI_LANG_zh_Hans=y
