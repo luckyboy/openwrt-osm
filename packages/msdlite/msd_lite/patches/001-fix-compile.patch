@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 30ee30e..01e8e64 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -258,7 +258,7 @@ add_custom_target(dist ${CMAKE_CURRENT_SOURCE_DIR}/dist.sh
+ ##################### INSTALLATION #####################################
+ 
+ # Configs
+-install(CODE "FILE(MAKE_DIRECTORY ${CONFDIR})")
++#install(CODE "FILE(MAKE_DIRECTORY ${CONFDIR})")
+ 
+ install_if_not_exists(conf/msd_lite.conf ${CONFDIR} "msd_lite.conf" ".sample")
+ 

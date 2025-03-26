@@ -1,0 +1,13 @@
+diff --git a/conf/msd_lite.conf b/conf/msd_lite.conf
+index 5656cae..c744b95 100644
+--- a/conf/msd_lite.conf
++++ b/conf/msd_lite.conf
+@@ -70,7 +70,7 @@ available.
+ 				<rcvTimeout>2</rcvTimeout> <!-- STATUS, Multicast recv timeout. -->
+ 			</skt>
+ 			<multicast> <!-- For: multicast-udp and multicast-udp-rtp. -->
+-				<ifName>vlan777</ifName> <!-- For multicast receive. -->
++				<ifName>eth2.45</ifName> <!-- For multicast receive. -->
+ 				<rejoinTime>0</rejoinTime> <!-- Do IGMP/MLD leave+join every X seconds. -->
+ 			</multicast>
+ 		</sourceProfile>

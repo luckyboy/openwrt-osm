@@ -3,21 +3,9 @@ set -e
 #Include yaml helper
 source ../parse_yaml.sh
 
-#Download pacakge ($1 url^commitid or url;tag)
-function download_package(){
-    repo=$(echo $1 | grep -Eo '^http*.*..git')
-    commit=$(echo $1 | grep -Eo '\^.*' | tr -d '^')
-    branch=$(echo $1 | grep -Eo ';.*' | tr -d ';')
-    if [ ! -z $commit ]; then
-        echo Downloading package from $1
-        git -C package clone $repo && cd package/$(basename $repo .git) && git checkout $commit && cd -
-    elif [ ! -z $branch ]; then
-        echo Downloading package from $1
-        git -C package clone $repo --depth 1 --branch $branch
-    else
-        echo "Invalid package info $1"
-        exit 1
-    fi
+function merge_feeds(){
+    eval $(parse_yaml ../version.yaml)
+    for f in $version_feeds_ ; do eval echo \$${f} >> feeds.conf.default ; done
 }
 
 #Download source code (./openwrt is working dir)
@@ -26,8 +14,6 @@ function download_source_code(){
     eval $(parse_yaml ../version.yaml)
     git config --global advice.detachedHead false
     git clone -b $version_upstream_version_tag --depth 1 https://github.com/openwrt/openwrt.git .
-    #Download extra package
-    for f in $version_package_ ; do eval download_package \$${f} ; done
 }
 
 #Update feeds
@@ -85,6 +71,7 @@ function apply_patches(){
     do
         if [ -d $(dirname ${patch#*../patches/}) ] ; then
             cp $patch ${patch#*../patches/}
+            echo "Apply $patch to ${patch#*../patches/}"
         fi
     done
 }
@@ -123,6 +110,7 @@ function prepare_artifacts(){
 case $1 in
     "all")
         download_source_code
+        merge_feeds
         update_feeds
         merge_config
         setup_external_toolchain
@@ -131,7 +119,7 @@ case $1 in
         compile
         generate_vmdk
         ;;
-    "download_source_code" | "update_feeds" | "merge_config" | "setup_external_toolchain" | "make_download" | "apply_patches" | "compile" | "generate_vmdk")
+    "download_source_code" | "merge_feeds" | "update_feeds" | "merge_config" | "setup_external_toolchain" | "make_download" | "apply_patches" | "compile" | "generate_vmdk")
         $1
         ;;
 esac

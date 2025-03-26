@@ -82,25 +82,8 @@ jobs:
           git config --global advice.detachedHead false
           git clone -b $version_upstream_version_tag --depth 1 https://github.com/openwrt/openwrt.git .
 
-          # $1 repo url
-          download_package(){
-            repo=$(echo $1 | grep -Eo '^http*.*..git')
-            commit=$(echo $1 | grep -Eo '\^.*' | tr -d '^')
-            branch=$(echo $1 | grep -Eo ';.*' | tr -d ';')
-            if [ ! -z $commit ]; then
-              echo Downloading package from $1
-              git -C package clone $repo && cd package/$(basename $repo .git) && git checkout $commit && cd -
-            elif [ ! -z $branch ]; then
-              echo Downloading package from $1
-              git -C package clone $repo --depth 1 --branch $branch
-            else
-              echo "Invalid package info $1"
-              exit 1
-            fi
-          }
-
-          #Download extra package
-          for f in $version_package_ ; do eval download_package \$${f} ; done
+          #Merge_feeds
+          for f in $version_feeds_ ; do eval echo \$${f} >> feeds.conf.default ; done
 
       - name: Update feeds
         run: |

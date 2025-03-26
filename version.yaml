@@ -3,10 +3,12 @@ version:
   ##OpenWrt official release version tag from https://github.com/openwrt/openwrt.git
   upstream_version_tag:v24.10.0
   ## Will be downloaded in package dir
-  package:
-    - https://github.com/jerrykuku/luci-theme-argon.git;v1.8.3
-    - https://github.com/sirpdboy/luci-app-ddns-go.git;v6.7.0
-    - https://github.com/vernesong/OpenClash.git;v0.46.075
+  feeds:
+    - src-git ddnsgo https://github.com/sirpdboy/luci-app-ddns-go.git;v6.8.1
+    - src-git openclash https://github.com/vernesong/OpenClash.git;v0.46.079
+    - src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;v1.21.1
+    - src-link theme ../../packages/theme
+    - src-link msdlite ../../packages/msdlite
   ## Will be merged with buildinfo.config from upstream release
   config:
     - CONFIG_LUCI_LANG_zh_Hans=y
@@ -17,6 +19,8 @@ version:
     - CONFIG_PACKAGE_luci-app-udpxy=y
     - CONFIG_PACKAGE_luci-app-ddns-go=y
     - CONFIG_PACKAGE_luci-app-dockerman=y
+    - CONFIG_PACKAGE_luci-app-msd_lite=y
+    - CONFIG_PACKAGE_luci-app-nikki=y
     - CONFIG_PACKAGE_luci-proto-wireguard=y
     - CONFIG_PACKAGE_dockerd=y
     - CONFIG_PACKAGE_kmod-bnx2x=y
