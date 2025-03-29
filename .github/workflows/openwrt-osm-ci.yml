@@ -72,7 +72,7 @@ jobs:
           echo "======================="
           du -h ./ --max-depth=1
 
-      - name: Download source code
+      - name: Download code
         run: |
           #Prepare version
           source ../parse_yaml.sh
@@ -91,7 +91,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Generate configuration file
+      - name: Merge config
         run: |
           #Prepare version info
           source ../parse_yaml.sh
@@ -122,6 +122,12 @@ jobs:
           sed -i "s/CONFIG_VERSION_DIST=\"OpenWrt\"/CONFIG_VERSION_DIST=\"OpenWrt-OSM\"/g" .config
           sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER=\"${version_version_number}\"/g" .config
           sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"r$revision_number-$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
+
+          #Exclude none official feeds from distfeeds.conf
+          for feed in $(grep -v 'https://git\.openwrt\.org' feeds.conf.default | awk '{print $2}');
+          do
+              echo "CONFIG_FEED_${feed}=m" >> .config
+          done
 
           #Download Toolchain
           cd /tmp > /dev/null
@@ -163,7 +169,7 @@ jobs:
           echo "======================="
           du -h ./ --max-depth=1
 
-      - name: Generate vmdk files
+      - name: Generate vmdk
         run: |
           #Convert img to vmdk
           for file in $(find ./bin -name "openwrt-osm-*-efi.img.gz" -type f);
@@ -195,7 +201,7 @@ jobs:
           name: openwrt-osm-${{ env.VERSION_NUMBER }}
           path: openwrt/artifact/
 
-      - name: Upload release asset
+      - name: Upload release
         if: github.event_name == 'release'
         uses: alexellis/upload-assets@0.4.0
         env:

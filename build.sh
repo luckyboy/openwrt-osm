@@ -37,6 +37,11 @@ function merge_config(){
     sed -i "s/CONFIG_VERSION_DIST=\"OpenWrt\"/CONFIG_VERSION_DIST=\"OpenWrt-OSM\"/g" .config
     sed -i "s/CONFIG_VERSION_NUMBER=\"\"/CONFIG_VERSION_NUMBER=\"${version_version_number}\"/g" .config
     sed -i "s/CONFIG_VERSION_CODE=\"\"/CONFIG_VERSION_CODE=\"r$(git -C ../ log --pretty=format:%h | wc -l)-$(git -C ../ rev-parse --short=10 HEAD)\"/g" .config
+    #Exclude none official feeds from distfeeds.conf
+    for feed in $(grep -v 'https://git\.openwrt\.org' feeds.conf.default | awk '{print $2}');
+    do
+        echo "CONFIG_FEED_${feed}=m" >> .config
+    done
 }
 
 #Setup external toolchain
