@@ -1,6 +1,8 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2006-2014 OpenWrt.org
 
+. /lib/functions/network.sh
+
 START=50
 USE_PROCD=1
 
@@ -29,7 +31,6 @@ append_bool() {
 start_instance() {
 	local cfg="$1"
 	local aux
-	local dev
 
 	config_get_bool aux "$cfg" 'disabled' '0'
 	[ "$aux" = 1 ] && return 1
@@ -43,7 +44,31 @@ start_instance() {
 	append_bool "$cfg" status "-S"
 	append_arg "$cfg" bind "-a"
 	append_arg "$cfg" port "-p"
-	append_arg "$cfg" source "-m"
+
+	local source
+	config_get source "$cfg" source
+
+	[ -n "$source" ] || {
+		local s_network
+		local wait=10
+
+		config_get s_network "$cfg" source_network
+		[ -z "$s_network" ] || {
+			network_get_device source "$s_network"
+
+			while [ -z "$source" ] && [ "$wait" -le 0 ]; do
+				sleep 2
+
+				network_flush_cache
+				network_get_device source "$s_network"
+
+				let wait-=1
+			done
+		}
+	}
+
+	[ -z "$source" ] || procd_append_param command -m "${source}"
+
 	append_arg "$cfg" max_clients "-c"
 	append_arg "$cfg" log_file "-l"
 	append_arg "$cfg" buffer_size "-B"
@@ -55,21 +80,30 @@ start_instance() {
 	config_get_bool aux "$cfg" 'respawn' '0'
 	[ "$aux" = 1 ] && procd_set_param respawn
 
-	config_get dev "$cfg" "source"
-	[ -n "$dev" ] && procd_set_param netdev $dev
-
 	procd_close_instance
 }
 
+trigger_instance() {
+	local cfg="$1"
+	local aux
+
+	config_get_bool aux "$cfg" 'disabled' '0'
+	[ "$aux" = 1 ] && return 1
+
+	local s_network;
+	config_get s_network "$cfg" source_network
+	[ -z "$s_network" ] || procd_add_reload_interface_trigger "$s_network"
+}
+
 service_triggers() {
-	local cfg
-	local dev
-	local ifname
 	procd_add_reload_trigger "udpxy"
-	cfg=$(config_foreach echo $1 udpxy)
-	config_get dev "$cfg" "source"
-	[ -n "$dev" ] && ifname=$(uci show network | grep $dev | awk '{split($0,arr,".");print arr[2]}')
-	[ -n "$ifname" ] && procd_add_interface_trigger "interface.*" $ifname /etc/init.d/udpxy restart
+
+	config_load udpxy
+	config_foreach trigger_instance udpxy
+}
+
+reload_service() {
+	restart
 }
 
 start_service() {
