@@ -72,13 +72,7 @@ function make_download(){
 
 #Apply patches
 function apply_patches(){
-    find ../patches/ -type f | while read patch
-    do
-        if [ -d $(dirname ${patch#*../patches/}) ] ; then
-            cp $patch ${patch#*../patches/}
-            echo "Apply $patch to ${patch#*../patches/}"
-        fi
-    done
+    cp -rf ../patches/* ./
 }
 
 #Compile firmware

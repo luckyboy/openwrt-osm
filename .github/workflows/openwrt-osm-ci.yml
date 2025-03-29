@@ -152,12 +152,7 @@ jobs:
 
       - name: Apply Patches
         run: |
-          find ../patches/ -type f | while read patch
-          do
-              if [ -d $(dirname ${patch#*../patches/}) ] ; then 
-                  cp $patch ${patch#*../patches/}
-              fi
-          done
+          cp -rvf ../patches/* ./
 
       - name: Compile firmware
         run: |
