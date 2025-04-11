@@ -8,8 +8,8 @@ board_config_update
 
 json_is_a network object && exit 0
 
-ucidef_set_interface "lan" device "eth0 eth1" ipaddr "10.0.0.1" netmask "255.255.255.0"
-ucidef_set_interface "wan" device "eth2"
+ucidef_set_interface "lan" device "eth0 eth1 eth2 eth3" ipaddr "10.0.0.1" netmask "255.255.255.0"
+ucidef_set_interface "wan" device "eth4"
 
 board_config_flush
 
