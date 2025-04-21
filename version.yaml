@@ -24,4 +24,6 @@ version:
     - CONFIG_PACKAGE_block-mount=y
     - CONFIG_PACKAGE_kmod-bnx2x=y
     - CONFIG_PACKAGE_kmod-nft-tproxy=y
+    - CONFIG_PACKAGE_i915-firmware=y
     - CONFIG_TARGET_ROOTFS_PARTSIZE=512
+    - CONFIG_VMDK_IMAGES=y

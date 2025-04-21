@@ -164,30 +164,14 @@ jobs:
           echo "======================="
           du -h ./ --max-depth=1
 
-      - name: Generate vmdk
-        run: |
-          #Convert img to vmdk
-          for file in $(find ./bin -name "openwrt-osm-*-efi.img.gz" -type f);
-          do
-            echo "Convert image $(basename $file) to vmdk"
-            cd $(dirname $file) > /dev/null
-            gunzip -f -q -c $(basename $file) > $(basename $file .gz)
-            qemu-img convert -f raw $(basename $file .gz) -O vmdk $(basename $file .img.gz).vmdk
-            gzip -f -q $(basename $file .img.gz).vmdk
-            rm $(basename $file .gz)
-            cd - > /dev/null
-          done
-
       - name: Prepare artifact
         run: |
           mkdir -p ./artifact
-          cp -rf $(find ./bin/targets/ -name "*.img.gz" -type f) ./artifact/
-          cp -rf $(find ./bin/targets/ -name "*.vmdk.gz" -type f) ./artifact/
+          cp -rf $(find ./bin/targets/ -type f -regex '.*\.\(gz\|vmdk\|manifest\|buildinfo\)' -o -name "sha256sums" -o -name "profiles.json") ./artifact/
           kmod_bnx2x=$(find ./bin -type f -name "kmod-bnx2x*.ipk")
           if [ ! -z $kmod_bnx2x ]; then
             cp -rf $kmod_bnx2x ./artifact/$(basename $(echo $kmod_bnx2x | sed 's/kmod-bnx2x/kmod-bnx2x_2.5G/g'))
           fi
-          cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/
 
       - name: Deliver release
         if: github.event_name != 'release'

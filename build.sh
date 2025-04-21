@@ -46,18 +46,19 @@ function merge_config(){
 
 #Setup external toolchain
 function setup_external_toolchain(){
-    toolchain_path=$(find /tmp -maxdepth 1 -name 'toolchain-x86_64_gcc*_musl' -type d)
+    toolchian_parent_dir=~
+    toolchain_path=$(find ${toolchian_parent_dir} -maxdepth 1 -name 'toolchain-x86_64_gcc*_musl' -type d)
     if [ -z $toolchain_path ]; then
         version_repo=$(grep -E '^VERSION_REPO.*https:/.' include/version.mk | grep -Eo 'https://.*[^)]')
-        cd /tmp/ > /dev/null
+        cd ${toolchian_parent_dir}/ > /dev/null
         wget -nv -O release_page.html ${version_repo}/targets/x86/64/
-        toolchain_file=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).(xz|zst)"' /tmp/release_page.html | tr -d '"')
+        toolchain_file=$(grep -m 1 -Eo '"openwrt-toolchain-(.*).(xz|zst)"' ${toolchian_parent_dir}/release_page.html | tr -d '"')
         echo "Downloading toolchain...${toolchain_file}"
         wget -nv -O ${toolchain_file} ${version_repo}/targets/x86/64/${toolchain_file}
         tar -xf ${toolchain_file}
         toolchain_dir=$(basename $(find ${toolchain_file%.*.*} -name "toolchain-*" -type d))
         mv -f ${toolchain_file%.*.*}/${toolchain_dir} .
-        toolchain_path=/tmp/$toolchain_dir
+        toolchain_path=${toolchian_parent_dir}/$toolchain_dir
         rm -rf ${toolchain_file%.*.*}*
         cd - > /dev/null
     fi
@@ -80,30 +81,14 @@ function compile(){
     make -j8 || make -j1 V=s
 }
 
-#Convert img to vmdk
-function generate_vmdk(){
-    for file in $(find ./bin/targets/ -name "openwrt-osm-*-efi.img.gz" -type f);
-    do
-        echo "Convert image $(basename $file) to vmdk"
-        cd $(dirname $file) > /dev/null
-        gunzip -f -q -c $(basename $file) > $(basename $file .gz)
-        qemu-img convert -f raw $(basename $file .gz) -O vmdk $(basename $file .img.gz).vmdk
-        gzip -f -q $(basename $file .img.gz).vmdk
-        rm $(basename $file .gz)
-        cd - > /dev/null
-    done
-}
-
 #Prepare artifacts for uploading
 function prepare_artifacts(){
     mkdir -p ./artifact
-    cp -rf $(find ./bin/targets/ -name "*.img.gz" -type f) ./artifact/
-    cp -rf $(find ./bin/targets/ -name "*.vmdk.gz" -type f) ./artifact/
+    cp -rf $(find ./bin/targets/ -type f -regex '.*\.\(gz\|vmdk\|manifest\|buildinfo\)' -o -name "sha256sums" -o -name "profiles.json") ./artifact/
     kmod_bnx2x=$(find ./bin -type f -name "kmod-bnx2x*.ipk")
     if [ ! -z $kmod_bnx2x ]; then
         cp -rf $kmod_bnx2x ./artifact/$(basename $(echo $kmod_bnx2x | sed 's/kmod-bnx2x/kmod-bnx2x_2.5G/g'))
     fi
-    cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/
 }
 
 case $1 in
@@ -116,9 +101,8 @@ case $1 in
         make_download
         apply_patches
         compile
-        generate_vmdk
         ;;
-    "download_source_code" | "merge_feeds" | "update_feeds" | "merge_config" | "setup_external_toolchain" | "make_download" | "apply_patches" | "compile" | "generate_vmdk")
+    "download_source_code" | "merge_feeds" | "update_feeds" | "merge_config" | "setup_external_toolchain" | "make_download" | "apply_patches" | "compile")
         $1
         ;;
 esac
